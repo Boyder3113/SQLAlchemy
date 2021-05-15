@@ -9,7 +9,7 @@ from sqlalchemy import create_engine, func
 from flask import Flask, jsonify
 
 #create database engine
-engine = create_engine("sqlite:///hawaii.sqlite")
+engine = create_engine("sqlite:///D:\DU_GitLab\GitHub Repositories\SQLAlchemy\Resources\hawaii.sqlite", connect_args={'check_same_thread':False})
 #reflect an existing database into new model
 Base = automap_base()
 #reflect the tables
@@ -26,7 +26,7 @@ app = Flask(__name__)
 recent_date = (session.query(measurement.date).order_by(measurement.date.desc()).first())
 recent_date_ravel = list(np.ravel(recent_date))[0]
 
-last_date = dt.datetime.strftime(recent_date_ravel, '%Y-%m-%d')
+last_date = dt.datetime.strptime(recent_date_ravel, '%Y-%m-%d')
 year_int = int(dt.datetime.strftime(last_date, '%Y'))
 month_int = int(dt.datetime.strftime(last_date, '%m'))
 day_int = int(dt.datetime.strftime(last_date, '%d'))
@@ -37,49 +37,37 @@ last_year_int = dt.datetime.strftime(last_year, '%Y-%m-%d')
 
 @app.route("/")
 def home():
-    return (f"Hawaii Weather Station and Percipitation API, Surfs up!"
-            f"-------------------------------------------------------"
-            f"Available API routes listed below"
-            f"/api/v1.0/precipitation"
-            f"/api/v1.0/stations"
-            f"/api/v1.0/tobs"
-            f"/api/v1.0/<startdate>"
-            f"/api/v1.0/<startdate>/<enddate>")
+    return (f"Hawaii Weather Station and Percipitation API, Surfs up!<br/>"
+            f"------------------------------------------------------<br/>"
+            f"Available API routes listed below<br/>"
+            f"/api/v1.0/precipitation<br/>"
+            f"/api/v1.0/stations<br/>"
+            f"/api/v1.0/tobs<br/>"
+            f"/api/v1.0/<startdate><br/>"
+            f"/api/v1.0/<startdate>/<enddate><br/>")
 
 @app.route("/api/v1.0/precipitation")
 def precip():
-        results = (session.query(measurement.date, measurement.prcp, measurement.station)
-                            .filter(measurement.date >= last_year)
-                            .order_by(measurement.date).all())
-        
-        rainData = []
+        results = (session.query(measurement.date, measurement.prcp).\
+                filter(measurement.date>=last_year_int).order_by(measurement.date).all())
+        results_dict = list(np.ravel(results))
+        return jsonify(results_dict)
 
-        for r in results:
-                rainDict = {result.date: result.prcp, "Station": result.station}
-                rainData.append(rainDict)
-        
-        return jsonify(rainData)
+       
 
 @app.route("/api/v1.0/stations")
 def stations():
-        station_names = session.query(Station.name).all()
-        stations = list(np.ravel(station_names))
+        station_names = session.query(station.name).all()
+        all_stations = list(np.ravel(station_names))
         return jsonify(all_stations)
-
+        
 
 @app.route("/api/v1.0/tobs")
 def tobs():
        
-        temp = (session.query(measurement.date, measurement.tobs, measurement.station)
-                .filter(measurement.date >= last_year)
-                .orber_by(measurement.date) .all())
-        
-        tobsData = []
-
-        for t in temp:
-                tobsDict = {temp.date: temp.tobs, "Station":temp.station}
-                tobsData.append(tempDict)
-
+        temp = (session.query(measurement.date, measurement.tobs, measurement.station).\
+                filter(measurement.date >= last_year).order_by(measurement.date).all())
+        tobsData = list(np.ravel(temp))
         return jsonify(tobsData)
 
 @app.route("/api/v1.0/<startdate>")
